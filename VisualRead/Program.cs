@@ -216,6 +216,7 @@ namespace analisis_imagenes
                 results.Status == OperationStatusCodes.NotStarted));
             // </snippet_extract_response>
 
+
             // <snippet_extract_display>
             // Display the found text.
             Console.WriteLine();
