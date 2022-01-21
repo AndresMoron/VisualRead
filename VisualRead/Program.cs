@@ -23,6 +23,7 @@ namespace analisis_imagenes
        // private static List<string> imagenes = new List<string> { "upsa.jpg", "salar.jpg", "microsoft.jpg", "celebrities.jpg" };
         public static List<string> textos = new List<string> { "texto.jpg","texto2.jpg"};
 
+
         static void Main(string[] args)
         {
             Console.WriteLine("Azure Cognitive Services - Computer Vision");
