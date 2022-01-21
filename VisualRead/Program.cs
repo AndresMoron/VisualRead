@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
@@ -11,30 +10,28 @@ using System.Threading;
 using System.Linq;
 
 
-namespace analisis_imagenes
+namespace VisualRead
 {
 
     public class Program
     {
-        // Variables de conexion del portal de azure
+       
         static string subscriptionKey = "1d0ea4261e724467b0730e19e9e57276";
         static string endpoint = "https://visionreadandres.cognitiveservices.azure.com/";
 
-       // private static List<string> imagenes = new List<string> { "upsa.jpg", "salar.jpg", "microsoft.jpg", "celebrities.jpg" };
-        public static List<string> textos = new List<string> { "texto.jpg","texto2.jpg"};
+        public static List<string> textos = new List<string> { "placa.jpg", "auto.jpg" };
 
         static void Main(string[] args)
         {
             Console.WriteLine("Azure Cognitive Services - Computer Vision");
             Console.WriteLine();
 
-            ComputerVisionClient client = Authenticate(endpoint, subscriptionKey); //Instanciamos el cliente 
+            ComputerVisionClient client = Authenticate(endpoint, subscriptionKey);  
 
-            //Local porque se almacena localmente en la PC, tambien hay la opcion de pasar URL a imagenes en internet.
 
             foreach (var texto in textos)
             {
-                // Extraer texto de una imagen local
+                // Local Image
                 ReadFileLocal(client, texto).Wait();
             }
 
@@ -50,7 +47,7 @@ namespace analisis_imagenes
             return client;
         }
 
-        //Analisis de imagenes
+        //Image Analysis
         public static async Task AnalyzeImageLocal(ComputerVisionClient client, string localImage)
         {
             Console.WriteLine("----------------------------------------------------------");
@@ -105,6 +102,19 @@ namespace analisis_imagenes
                     Console.WriteLine();
                 }
 
+                // Objects
+                if (null != results.Objects)
+                {
+                    Console.WriteLine("Objects:");
+                    foreach (var obj in results.Objects)
+                    {
+                        Console.WriteLine($"{obj.ObjectProperty} with confidence {obj.Confidence} at location {obj.Rectangle.X}, " +
+                          $"{obj.Rectangle.X + obj.Rectangle.W}, {obj.Rectangle.Y}, {obj.Rectangle.Y + obj.Rectangle.H}");
+                    }
+                    Console.WriteLine();
+                }
+
+
                 // Well-known brands, if any.
                 if (null != results.Brands)
                 {
@@ -117,18 +127,17 @@ namespace analisis_imagenes
                     Console.WriteLine();
                 }
 
-                // Celebrities in image, if any.
+                // Popular landmarks in image, if any.
                 if (null != results.Categories)
                 {
-                    Console.WriteLine("Celebrities:");
+                    Console.WriteLine("Landmarks:");
                     foreach (var category in results.Categories)
                     {
-                        if (category.Detail?.Celebrities != null)
+                        if (category.Detail?.Landmarks != null)
                         {
-                            foreach (var celeb in category.Detail.Celebrities)
+                            foreach (var landmark in category.Detail.Landmarks)
                             {
-                                Console.WriteLine($"{celeb.Name} with confidence {celeb.Confidence} at location {celeb.FaceRectangle.Left}, " +
-                                  $"{celeb.FaceRectangle.Top},{celeb.FaceRectangle.Height},{celeb.FaceRectangle.Width}");
+                                Console.WriteLine($"{landmark.Name} with confidence {landmark.Confidence}");
                             }
                         }
                     }
@@ -157,7 +166,7 @@ namespace analisis_imagenes
                 }
             }
         }
-        //Fin de analisis de imagenes
+        
 
         //Dominio especifico
         public static async Task DetectDomainSpecific(ComputerVisionClient client, string localImage)
@@ -183,9 +192,9 @@ namespace analisis_imagenes
             }
             Console.WriteLine();
         }
-        //Fin de dominio especifico
+        
 
-        //Extraer texto
+        //Text
         public static async Task ReadFileLocal(ComputerVisionClient client, string localFile)
         {
             Console.WriteLine("----------------------------------------------------------");
@@ -232,149 +241,5 @@ namespace analisis_imagenes
         //Fin de extraer texto
     }
 }
-/*
-namespace VisualRead
-{
-    class Program
-    {
-        // Add your Computer Vision subscription key and endpoint
-        static string subscriptionKey = "1d0ea4261e724467b0730e19e9e57276";
-        static string endpoint = "https://visionreadandres.cognitiveservices.azure.com/";
-        // URL image used for analyzing an image (image of puppy)
-        private const string ANALYZE_URL_IMAGE = "https://azurecomcdn.azureedge.net/cvt-751c3316019c3a45b91ae729e81ed0fce378619280a8bf91489fe735368537a4/images/shared/cognitive-services-demos/analyze-image/analyze-5-thumbnail.jpg";
-        
-        static void Main(string[] args)
-        {
-            // Create a client
-            ComputerVisionClient client = Authenticate(endpoint, subscriptionKey);
-
-            // Analyze an image to get features and other properties.
-            AnalyzeImageUrl(client, ANALYZE_URL_IMAGE).Wait();
-
-            Console.WriteLine("----------------------------------------------------------");
-            Console.WriteLine();
-            Console.WriteLine("Computer Vision quickstart is complete.");
-            Console.WriteLine();
-            Console.WriteLine("Press enter to exit...");
-            Console.ReadLine();
-
-        }
-        public static ComputerVisionClient Authenticate(string endpoint, string key)
-        {
-
-            ComputerVisionClient client =
-              new ComputerVisionClient(new ApiKeyServiceClientCredentials(key))
-              { Endpoint = endpoint };
-            return client;
-        }
-
-            public static async Task AnalyzeImageUrl(ComputerVisionClient client, string imageUrl)
-            {
-                Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine("ANALYZE IMAGE - URL");
-                Console.WriteLine();
-
-                // Creating a list that defines the features to be extracted from the image. 
-                List<VisualFeatureTypes?> features = new List<VisualFeatureTypes?>()
-            {
-            VisualFeatureTypes.Categories, VisualFeatureTypes.Description,
-            //VisualFeatureTypes.Tags, VisualFeatureTypes.Adult,
-            VisualFeatureTypes.Objects
-
-            };
-                Console.WriteLine($"Analyzing the image {Path.GetFileName(imageUrl)}...");
-                Console.WriteLine();
-
-                // Analyze the URL image 
-                ImageAnalysis results = await client.AnalyzeImageAsync(imageUrl, visualFeatures: features);
-
-                // Sunmarizes the image content.
-                Console.WriteLine("Summary:");
-                foreach (var caption in results.Description.Captions)
-                {
-                    Console.WriteLine($"{caption.Text} with confidence {caption.Confidence}");
-                }
-                Console.WriteLine();
-            // Extract the text
-            ReadOperationResult results;
-            Console.WriteLine($"Reading text from local file {Path.GetFileName(localFile)}...");
-            Console.WriteLine();
-            do
-            {
-                results = await client.GetReadResultAsync(Guid.Parse(operationId));
-            }
-            while ((results.Status == OperationStatusCodes.Running ||
-                results.Status == OperationStatusCodes.NotStarted));
-            // </snippet_extract_response>
-
-            // <snippet_extract_display>
-            // Display the found text.
-            Console.WriteLine();
-            var textUrlFileResults = results.AnalyzeResult.ReadResults;
-            foreach (ReadResult page in textUrlFileResults)
-            {
-                foreach (Line line in page.Lines)
-                {
-                    Console.WriteLine(line.Text);
-                }
-            }
-            Console.WriteLine();
-        }
-
-        // Display categories the image is divided into.
-        /* Console.WriteLine("Categories:");
-
-         foreach (var category in results.Categories)
-         {
-             Console.WriteLine($"{category.Name} with confidence {category.Score}");
-         }
-         Console.WriteLine();
-     // Image tags and their confidence score
-     Console.WriteLine("Tags:");
-     foreach (var tag in results.Tags)
-     {
-         Console.WriteLine($"{tag.Name} {tag.Confidence}");
-     }
-     Console.WriteLine();
-     // </snippet_tags>
-
-     // <snippet_objects>
-     // Objects
-     Console.WriteLine("Objects:");
-     foreach (var obj in results.Objects)
-     {
-         Console.WriteLine($"{obj.ObjectProperty} with confidence {obj.Confidence} at location {obj.Rectangle.X}, " +
-           $"{obj.Rectangle.X + obj.Rectangle.W}, {obj.Rectangle.Y}, {obj.Rectangle.Y + obj.Rectangle.H}");
-     }
-     Console.WriteLine();
-
-     Console.WriteLine("Brands:");
-     foreach (var brand in results.Brands)
-     {
-         Console.WriteLine($"Logo of {brand.Name} with confidence {brand.Confidence} at location {brand.Rectangle.X}, " +
-           $"{brand.Rectangle.X + brand.Rectangle.W}, {brand.Rectangle.Y}, {brand.Rectangle.Y + brand.Rectangle.H}");
-     }
-     Console.WriteLine();
-
-     Console.WriteLine("Landmarks:");
-     foreach (var category in results.Categories)
-     {
-         if (category.Detail?.Landmarks != null)
-         {
-             foreach (var landmark in category.Detail.Landmarks)
-             {
-                 Console.WriteLine($"{landmark.Name} with confidence {landmark.Confidence}");
-             }
-         }
-     }
-     Console.WriteLine();
-        
 
 
-
-
-    }
-
-    }
-
-}*/
